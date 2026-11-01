@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+deploy/.env.*
+!deploy/.env.production.example
+coverage/
+*.db
+*.sqlite
+src-tauri/target/
+android/.gradle/
+android/local.properties
+*.jks
+*.keystore
+.DS_Store

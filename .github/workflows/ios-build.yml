@@ -1,0 +1,60 @@
+name: iOS Build & Archive
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master, main]
+    paths:
+      - 'ios/**'
+      - 'apps/**'
+      - 'package.json'
+      - 'capacitor.config.ts'
+
+jobs:
+  build-ios:
+    name: Compile iOS Native Workspace
+    runs-on: macos-14
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Select Xcode Version
+        run: sudo xcode-select -s /Applications/Xcode_16.app
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Web Application
+        run: npm run build
+
+      - name: Synchronize Capacitor iOS Project
+        run: npx cap sync ios
+
+      - name: Install CocoaPods
+        working-directory: ios/App
+        run: pod install
+
+      - name: Build Xcode Workspace (Debug, Unsigned Simulator/Device)
+        working-directory: ios/App
+        run: |
+          xcodebuild build \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Debug \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO
+
+      - name: Compress and Upload iOS Build Output
+        uses: actions/upload-artifact@v4
+        with:
+          name: kastren-ios-debug-build
+          path: ios/App/build/Build/Products/Debug-iphoneos/
+          retention-days: 7

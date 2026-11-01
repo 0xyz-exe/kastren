@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="kg-pillar" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="kg-upper" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#059669"/>
+      <stop offset="60%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#34d399"/>
+    </linearGradient>
+    <linearGradient id="kg-lower" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#047857"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+    <linearGradient id="kg-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#059669" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Background Canvas Tile (Modern Dark Obsidian Squircle) -->
+  <rect width="512" height="512" rx="128" fill="#090d0b"/>
+  <rect width="510" height="510" x="1" y="1" rx="127" fill="none" stroke="url(#kg-glow)" stroke-width="2"/>
+
+  <!-- Symbol "K": Pillar (Stability) + Upward Arrow (Trend) + Anchor -->
+  <g filter="url(#shadow)" transform="translate(112, 106)">
+    <!-- 1. The Stability Pillar (Ledger Anchor) -->
+    <rect x="0" y="0" width="68" height="300" rx="34" fill="url(#kg-pillar)"/>
+
+    <!-- 2. The Ascending Trend Arrow (Upward Momentum & Growth) -->
+    <path d="M 68 150 L 176 34 C 188 20 208 20 220 32 L 230 42 C 242 54 242 74 228 86 L 126 182 Z" fill="url(#kg-upper)"/>
+    <circle cx="218" cy="48" r="8" fill="#6ee7b7"/>
+
+    <!-- 3. The Grounding Leg (Cash Flow Balance) -->
+    <path d="M 104 154 L 218 262 C 230 274 230 294 218 306 L 208 316 C 196 328 176 328 164 316 L 68 214 Z" fill="url(#kg-lower)"/>
+
+    <!-- 4. The Vault Diamond Vertex (Core Solvency) -->
+    <polygon points="68,150 114,110 148,150 102,190" fill="#34d399" opacity="0.95"/>
+  </g>
+</svg>

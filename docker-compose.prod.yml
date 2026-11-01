@@ -1,0 +1,67 @@
+services:
+  # Hardened Nginx Reverse Proxy
+  proxy:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./dist:/var/www/kastren:ro
+      - certs:/etc/letsencrypt:ro
+      - certbot-challenge:/var/www/certbot:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - kastren-public
+      - kastren-internal
+
+  # Fastify API (Production container)
+  api:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile.api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      API_PORT: 3000
+      DATABASE_URL: postgresql://kastren:${POSTGRES_PASSWORD}@db:5432/kastren?schema=public
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET must be set and at least 32 characters}
+      WEB_ORIGIN: ${WEB_ORIGIN:?WEB_ORIGIN must be set (e.g. https://kastren.example.com)}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - kastren-internal
+
+  # PostgreSQL Database (Restricted to internal container network)
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kastren
+      POSTGRES_USER: kastren
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set strong POSTGRES_PASSWORD in .env}
+    volumes:
+      - kastren-postgres-prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kastren -d kastren"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - kastren-internal
+
+networks:
+  kastren-public:
+    driver: bridge
+  kastren-internal:
+    driver: bridge
+    internal: true
+
+volumes:
+  kastren-postgres-prod:
+  certs:
+  certbot-challenge:

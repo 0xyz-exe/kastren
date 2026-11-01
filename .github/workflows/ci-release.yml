@@ -1,0 +1,97 @@
+name: CI & Release Verification
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  lint-and-typecheck:
+    name: Typecheck & Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript strict verification
+        run: npm run typecheck
+
+      - name: Production dependency audit
+        run: npm audit --omit=dev --audit-level=high
+
+  test:
+    name: Monorepo Integration Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: kastren_test
+          POSTGRES_USER: kastren
+          POSTGRES_PASSWORD: test_ci_password_at_least_16_chars
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Prisma migrations
+        env:
+          DATABASE_URL: postgresql://kastren:test_ci_password_at_least_16_chars@127.0.0.1:5432/kastren_test?schema=public
+        run: npx prisma migrate deploy --schema services/api/prisma/schema.prisma
+
+      - name: Execute Vitest test suite
+        env:
+          DATABASE_URL: postgresql://kastren:test_ci_password_at_least_16_chars@127.0.0.1:5432/kastren_test?schema=public
+          SESSION_SECRET: ci-test-session-secret-strictly-at-least-32-chars-long
+          WEB_ORIGIN: http://localhost:5173
+        run: npm test
+
+  build-frontend:
+    name: Build Production Web Bundle
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web assets
+        run: npm run build
+
+      - name: Verify build artifact integrity
+        run: |
+          test -f dist/index.html || { echo "Missing dist/index.html"; exit 1; }
+          ls -lh dist/assets/
